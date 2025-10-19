@@ -1,69 +1,32 @@
 import { useState } from "react";
+import { useBookTracker } from "../contexts/BookTrackerContext";
+import AddNoteModal from "./AddNoteModal";
+import type { Note } from "../types";
 
 function Notes() {
     // State for filtering and search - useState hook manages component state
     const [selectedBook, setSelectedBook] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
+    const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
+    const [editingNote, setEditingNote] = useState<Note | undefined>(undefined);
 
-    // Mock data - in real app, this would come from your useBookTracker hook
-    const books = [
-        { id: "1", title: "Programming in C", author: "K.N. King" },
-        { id: "2", title: "Clean Code", author: "Robert C. Martin" },
-        { id: "3", title: "The Pragmatic Programmer", author: "Andrew Hunt" },
-    ];
+    // Get data from context
+    const { state, getBookById } = useBookTracker();
 
-    const notes = [
-        {
-            id: "1",
-            bookId: "1",
-            bookTitle: "Programming in C",
-            page: 145,
-            content:
-                "Important concept about pointers and memory allocation. This explains why we need to be careful with malloc() and free().",
-            date: "2025-10-15",
-            tags: ["pointers", "memory"],
-        },
-        {
-            id: "2",
-            bookId: "2",
-            bookTitle: "Clean Code",
-            page: 67,
-            content:
-                "Functions should do one thing and do it well. Single Responsibility Principle in action.",
-            date: "2025-10-14",
-            tags: ["functions", "principles"],
-        },
-        {
-            id: "3",
-            bookId: "1",
-            bookTitle: "Programming in C",
-            page: 89,
-            content:
-                "Arrays and strings relationship. Remember that strings are just arrays of characters with null terminator.",
-            date: "2025-10-13",
-            tags: ["arrays", "strings"],
-        },
-        {
-            id: "4",
-            bookId: "3",
-            bookTitle: "The Pragmatic Programmer",
-            page: 23,
-            content:
-                "DRY principle - Don't Repeat Yourself. This is fundamental to good programming practices.",
-            date: "2025-10-12",
-            tags: ["principles", "best-practices"],
-        },
-    ];
+    // Get real data
+    const books = state.books;
+    const allNotes = state.notes;
 
     // Filter notes based on selected book and search term
-    const filteredNotes = notes.filter((note) => {
+    const filteredNotes = allNotes.filter((note) => {
         const matchesBook =
             selectedBook === "all" || note.bookId === selectedBook;
         const matchesSearch =
             note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            note.tags.some((tag) =>
-                tag.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+            (note.tags &&
+                note.tags.some((tag) =>
+                    tag.toLowerCase().includes(searchTerm.toLowerCase())
+                ));
         return matchesBook && matchesSearch;
     });
 
@@ -78,7 +41,11 @@ function Notes() {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h1 className="mb-0">Notes</h1>
                 {/* Bootstrap button with primary color - consistent with Bootstrap design system */}
-                <button className="btn btn-primary">
+                <button
+                    className="btn btn-primary"
+                    onClick={() => setIsAddNoteModalOpen(true)}
+                    disabled={books.length === 0}
+                >
                     <i className="bi bi-plus-lg me-2"></i>Add Note
                 </button>
             </div>
@@ -167,10 +134,12 @@ function Notes() {
                                     <div className="d-flex justify-content-between align-items-start mb-2">
                                         <div>
                                             <h6 className="card-title mb-1 text-primary">
-                                                {note.bookTitle}
+                                                {getBookById(note.bookId)
+                                                    ?.title || "Unknown Book"}
                                             </h6>
                                             <small className="text-muted">
-                                                Page {note.page} • {note.date}
+                                                Page {note.page} •{" "}
+                                                {note.dateCreated.toLocaleDateString()}
                                             </small>
                                         </div>
                                         {/* Dropdown menu for note actions */}
@@ -221,22 +190,34 @@ function Notes() {
                                     <p className="card-text">{note.content}</p>
 
                                     {/* Tags - Bootstrap badges for visual appeal */}
-                                    <div className="mt-2">
-                                        {note.tags.map((tag) => (
-                                            <span
-                                                key={tag}
-                                                className="badge bg-light text-dark me-2"
-                                            >
-                                                #{tag}
-                                            </span>
-                                        ))}
-                                    </div>
+                                    {note.tags && note.tags.length > 0 && (
+                                        <div className="mt-2">
+                                            {note.tags.map((tag) => (
+                                                <span
+                                                    key={tag}
+                                                    className="badge bg-light text-dark me-2"
+                                                >
+                                                    #{tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))
                     )}
                 </div>
             </div>
+
+            {/* Add Note Modal */}
+            <AddNoteModal
+                isOpen={isAddNoteModalOpen}
+                onClose={() => {
+                    setIsAddNoteModalOpen(false);
+                    setEditingNote(undefined);
+                }}
+                editNote={editingNote}
+            />
         </div>
     );
 }
