@@ -22,9 +22,7 @@ function App() {
 
     return (
         <>
-            <div className="container p-3">
-                {pageComponents[selectedPage] || <Home />}
-            </div>
+            {pageComponents[selectedPage] || <Home />}
             <NavBar
                 navBarItems={["Home", "Library", "Notes", "Stats"]}
                 onSelectedPage={handleSelectedPage}
