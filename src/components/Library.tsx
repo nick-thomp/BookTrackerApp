@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useBookTracker } from "../contexts/BookTrackerContext";
+import AddBookModal from "./AddBookModal";
+import AddNoteModal from "./AddNoteModal";
 
 function Library() {
     // State for filtering and view management
@@ -6,77 +9,15 @@ function Library() {
     const [searchTerm, setSearchTerm] = useState("");
     const [sortBy, setSortBy] = useState("dateAdded");
     const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
+    const [isAddBookModalOpen, setIsAddBookModalOpen] = useState(false);
+    const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
+    const [selectedBookForNote, setSelectedBookForNote] = useState<string>("");
 
-    const books = [
-        {
-            id: "1",
-            title: "Programming in C",
-            author: "K.N. King",
-            cover: "https://m.media-amazon.com/images/I/51EyaJeebHL.jpg",
-            dateAdded: "2025-10-10",
-            currentPage: 145,
-            totalPages: 320,
-            status: "reading",
-            genre: "Programming",
-            rating: 4,
-            description:
-                "A comprehensive guide to C programming for beginners and experienced developers.",
-        },
-        {
-            id: "2",
-            title: "Clean Code",
-            author: "Robert C. Martin",
-            cover: "https://m.media-amazon.com/images/I/41xShlnTZTL.jpg",
-            dateAdded: "2025-10-12",
-            currentPage: 67,
-            totalPages: 464,
-            status: "reading",
-            genre: "Programming",
-            rating: 5,
-            description:
-                "Principles and best practices for writing clean, maintainable software.",
-        },
-        {
-            id: "3",
-            title: "The Pragmatic Programmer",
-            author: "Andrew Hunt & David Thomas",
-            cover: "https://m.media-amazon.com/images/I/51Wf5vF1YNL.jpg",
-            dateAdded: "2025-10-14",
-            currentPage: 0,
-            totalPages: 352,
-            status: "to-read",
-            genre: "Programming",
-            rating: null,
-            description:
-                "Tips and techniques for becoming a better, more effective programmer.",
-        },
-        {
-            id: "4",
-            title: "JavaScript: The Good Parts",
-            author: "Douglas Crockford",
-            cover: "https://m.media-amazon.com/images/I/5188424824L.jpg",
-            dateAdded: "2025-10-08",
-            currentPage: 176,
-            totalPages: 176,
-            status: "finished",
-            genre: "Programming",
-            rating: 4,
-            description: "Essential JavaScript concepts and best practices.",
-        },
-        {
-            id: "5",
-            title: "Design Patterns",
-            author: "Gang of Four",
-            cover: "https://m.media-amazon.com/images/I/51szD9HC9pL.jpg",
-            dateAdded: "2025-10-05",
-            currentPage: 0,
-            totalPages: 395,
-            status: "to-read",
-            genre: "Programming",
-            rating: null,
-            description: "Elements of reusable object-oriented software.",
-        },
-    ];
+    // Get real data from context
+    const { state, updateBook } = useBookTracker();
+
+    // Get real books from context
+    const books = state.books;
 
     // Filter and sort books
     const filteredBooks = books
@@ -95,10 +36,7 @@ function Library() {
                 case "author":
                     return a.author.localeCompare(b.author);
                 case "dateAdded":
-                    return (
-                        new Date(b.dateAdded).getTime() -
-                        new Date(a.dateAdded).getTime()
-                    );
+                    return b.dateAdded.getTime() - a.dateAdded.getTime();
                 case "progress":
                     const progressA =
                         a.status === "finished"
@@ -119,6 +57,37 @@ function Library() {
         if (book.status === "finished") return 100;
         if (book.status === "to-read") return 0;
         return Math.round((book.currentPage / book.totalPages) * 100);
+    };
+
+    // Quick progress update
+    const quickProgressUpdate = (book: any) => {
+        const newPage = prompt(
+            `Update reading progress for "${book.title}"\nCurrent page: ${book.currentPage}/${book.totalPages}\n\nEnter new page number:`,
+            book.currentPage.toString()
+        );
+
+        if (newPage && !isNaN(parseInt(newPage))) {
+            const pageNum = parseInt(newPage);
+            if (pageNum >= 0 && pageNum <= book.totalPages) {
+                const updates: any = { currentPage: pageNum };
+
+                // Auto-update status based on progress
+                if (pageNum === 0) updates.status = "to-read";
+                else if (pageNum === book.totalPages)
+                    updates.status = "finished";
+                else if (book.status === "to-read") updates.status = "reading";
+
+                updateBook(book.id, updates);
+            } else {
+                alert(`Page number must be between 0 and ${book.totalPages}`);
+            }
+        }
+    };
+
+    // Open note modal for specific book
+    const openNoteModalForBook = (bookId: string) => {
+        setSelectedBookForNote(bookId);
+        setIsAddNoteModalOpen(true);
     };
 
     const getStatusBadge = (status: string) => {
@@ -162,7 +131,10 @@ function Library() {
                         {filteredBooks.length !== 1 ? "s" : ""} found
                     </p>
                 </div>
-                <button className="btn btn-primary">
+                <button
+                    className="btn btn-primary"
+                    onClick={() => setIsAddBookModalOpen(true)}
+                >
                     <i className="bi bi-plus-lg me-2"></i>Add New Book
                 </button>
             </div>
@@ -306,7 +278,10 @@ function Library() {
                                 </div>
 
                                 <img
-                                    src={book.cover}
+                                    src={
+                                        book.coverUrl ||
+                                        "https://via.placeholder.com/150x200?text=No+Cover"
+                                    }
                                     className="card-img-top"
                                     style={{
                                         height: "250px",
@@ -328,7 +303,7 @@ function Library() {
 
                                     {/* Rating */}
                                     <div className="mb-2 small">
-                                        {renderStars(book.rating)}
+                                        {renderStars(book.rating || null)}
                                     </div>
 
                                     {/* Progress */}
@@ -338,9 +313,26 @@ function Library() {
                                                 <small className="text-muted">
                                                     Progress
                                                 </small>
-                                                <small className="fw-bold">
-                                                    {getProgress(book)}%
-                                                </small>
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <small className="fw-bold">
+                                                        {getProgress(book)}%
+                                                    </small>
+                                                    <button
+                                                        className="btn btn-sm btn-outline-primary"
+                                                        style={{
+                                                            fontSize: "0.7rem",
+                                                            padding: "2px 6px",
+                                                        }}
+                                                        onClick={() =>
+                                                            quickProgressUpdate(
+                                                                book
+                                                            )
+                                                        }
+                                                        title="Update progress"
+                                                    >
+                                                        📖
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div
                                                 className="progress"
@@ -385,6 +377,18 @@ function Library() {
                                                     View Details
                                                 </button>
                                             )}
+                                            {/* Add Note button for all books */}
+                                            <button
+                                                className="btn btn-outline-secondary btn-sm"
+                                                onClick={() =>
+                                                    openNoteModalForBook(
+                                                        book.id
+                                                    )
+                                                }
+                                            >
+                                                <i className="bi bi-pencil me-1"></i>
+                                                Add Note
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -399,7 +403,10 @@ function Library() {
                         <div key={book.id} className="list-group-item">
                             <div className="d-flex align-items-center">
                                 <img
-                                    src={book.cover}
+                                    src={
+                                        book.coverUrl ||
+                                        "https://via.placeholder.com/60x90?text=No+Cover"
+                                    }
                                     alt={book.title}
                                     className="rounded me-3"
                                     style={{
@@ -420,10 +427,11 @@ function Library() {
 
                                     <div className="d-flex align-items-center mb-2">
                                         <div className="me-3">
-                                            {renderStars(book.rating)}
+                                            {renderStars(book.rating || null)}
                                         </div>
                                         <small className="text-muted">
-                                            Added {book.dateAdded}
+                                            Added{" "}
+                                            {book.dateAdded.toLocaleDateString()}
                                         </small>
                                     </div>
 
@@ -451,11 +459,28 @@ function Library() {
                                                     }}
                                                 ></div>
                                             </div>
-                                            <small className="text-muted">
-                                                {book.currentPage}/
-                                                {book.totalPages} (
-                                                {getProgress(book)}%)
-                                            </small>
+                                            <div className="d-flex align-items-center gap-2">
+                                                <small className="text-muted">
+                                                    {book.currentPage}/
+                                                    {book.totalPages} (
+                                                    {getProgress(book)}%)
+                                                </small>
+                                                <button
+                                                    className="btn btn-sm btn-outline-primary"
+                                                    style={{
+                                                        fontSize: "0.7rem",
+                                                        padding: "2px 6px",
+                                                    }}
+                                                    onClick={() =>
+                                                        quickProgressUpdate(
+                                                            book
+                                                        )
+                                                    }
+                                                    title="Update progress"
+                                                >
+                                                    📖
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -517,6 +542,20 @@ function Library() {
                     ))}
                 </div>
             )}
+
+            {/* Modals */}
+            <AddBookModal
+                isOpen={isAddBookModalOpen}
+                onClose={() => setIsAddBookModalOpen(false)}
+            />
+            <AddNoteModal
+                isOpen={isAddNoteModalOpen}
+                onClose={() => {
+                    setIsAddNoteModalOpen(false);
+                    setSelectedBookForNote("");
+                }}
+                preSelectedBookId={selectedBookForNote}
+            />
         </div>
     );
 }
