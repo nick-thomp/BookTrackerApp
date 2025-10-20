@@ -1,28 +1,62 @@
 import { useState } from "react";
+import { useBookTracker } from "../contexts/BookTrackerContext";
 
 function Stats() {
     // State for time period selection - allows users to switch between different views
     const [timePeriod, setTimePeriod] = useState("month");
 
-    // Mock statistics data - in real app, this would be calculated from your reading data
+    // Get real data from context
+    const { state, getStats } = useBookTracker();
+    const realStats = getStats();
+
+    // Calculate additional metrics
+    const calculateAverageRating = () => {
+        const booksWithRatings = state.books.filter(
+            (book) => book.rating && book.rating > 0
+        );
+        if (booksWithRatings.length === 0) return 0;
+        const sum = booksWithRatings.reduce(
+            (acc, book) => acc + (book.rating || 0),
+            0
+        );
+        return Math.round((sum / booksWithRatings.length) * 10) / 10;
+    };
+
+    const calculateFavoriteGenre = () => {
+        const genreCounts: Record<string, number> = {};
+        state.books.forEach((book) => {
+            if (book.genre) {
+                genreCounts[book.genre] = (genreCounts[book.genre] || 0) + 1;
+            }
+        });
+
+        const topGenre = Object.entries(genreCounts).sort(
+            ([, a], [, b]) => b - a
+        )[0];
+        return topGenre ? topGenre[0] : "No genre data";
+    };
+
+    // Calculate stats from real data
     const stats = {
         currentMonth: {
-            booksRead: 3,
-            pagesRead: 245,
-            readingTime: 12.5, // hours
-            averageSession: 45, // minutes
-            streak: 7, // days
+            booksRead: realStats.booksRead,
+            pagesRead: realStats.pagesRead,
+            readingTime: Math.round((realStats.pagesRead / 25) * 10) / 10, // Estimate: ~25 pages/hour
+            averageSession: Math.round(
+                realStats.pagesRead / Math.max(realStats.currentlyReading, 1)
+            ), // Average pages per session
+            streak: 7, // TODO: Calculate actual streak from reading sessions
             goal: {
-                books: 4,
-                pages: 300,
+                books: 4, // Default goal - could come from settings
+                pages: 300, // Default goal
             },
         },
         allTime: {
-            totalBooks: 15,
-            totalPages: 3420,
-            totalTime: 89.5,
-            averageRating: 4.2,
-            favoriteGenre: "Programming",
+            totalBooks: realStats.totalBooks,
+            totalPages: realStats.totalPages,
+            totalTime: Math.round((realStats.totalPages / 25) * 10) / 10, // Estimate
+            averageRating: calculateAverageRating(),
+            favoriteGenre: calculateFavoriteGenre(),
         },
     };
 
@@ -256,6 +290,7 @@ function Stats() {
             </div>
 
             {/* Recent Achievements Section */}
+
             <div className="card">
                 <div className="card-header">
                     <h5 className="mb-0">🏆 Recent Achievements</h5>

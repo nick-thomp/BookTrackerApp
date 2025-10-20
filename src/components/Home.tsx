@@ -1,62 +1,30 @@
 import { useState } from "react";
+import { useBookTracker } from "../contexts/BookTrackerContext";
+import AddBookModal from "./AddBookModal";
+import AddNoteModal from "./AddNoteModal";
+import type { Book } from "../types";
 
 function Home() {
     // State for managing what content to show
     const [showAllRecentBooks, setShowAllRecentBooks] = useState(false);
+    const [isAddBookModalOpen, setIsAddBookModalOpen] = useState(false);
+    const [isAddNoteModalOpen, setIsAddNoteModalOpen] = useState(false);
 
-    const books = [
-        {
-            id: "1",
-            title: "Programming in C",
-            author: "K.N. King",
-            cover: "https://m.media-amazon.com/images/I/51EyaJeebHL.jpg",
-            dateAdded: "2025-10-10",
-            currentPage: 145,
-            totalPages: 320,
-            status: "reading",
-            description:
-                "A comprehensive guide to C programming for beginners and experienced developers.",
-        },
-        {
-            id: "2",
-            title: "Clean Code",
-            author: "Robert C. Martin",
-            cover: "https://m.media-amazon.com/images/I/41xShlnTZTL.jpg",
-            dateAdded: "2025-10-12",
-            currentPage: 67,
-            totalPages: 464,
-            status: "reading",
-            description:
-                "Principles and best practices for writing clean, maintainable software.",
-        },
-        {
-            id: "3",
-            title: "The Pragmatic Programmer",
-            author: "Andrew Hunt & David Thomas",
-            cover: "https://m.media-amazon.com/images/I/51Wf5vF1YNL.jpg",
-            dateAdded: "2025-10-14",
-            currentPage: 0,
-            totalPages: 352,
-            status: "to-read",
-            description:
-                "Tips and techniques for becoming a better, more effective programmer.",
-        },
-        {
-            id: "4",
-            title: "JavaScript: The Good Parts",
-            author: "Douglas Crockford",
-            cover: "https://m.media-amazon.com/images/I/5188424824L.jpg",
-            dateAdded: "2025-10-08",
-            currentPage: 176,
-            totalPages: 176,
-            status: "finished",
-            description: "Essential JavaScript concepts and best practices.",
-        },
-    ];
+    // Get data from context
+    const {
+        state,
+        getCurrentlyReading,
+        getRecentNotes,
+        getStats,
+        getBookById,
+    } = useBookTracker();
 
     // Get currently reading books for the dashboard
-    const currentlyReading = books.filter((book) => book.status === "reading");
-    const recentBooks = showAllRecentBooks ? books : books.slice(0, 4);
+    const currentlyReading = getCurrentlyReading();
+    const recentBooks = showAllRecentBooks
+        ? state.books
+        : state.books.slice(0, 4);
+    const stats = getStats();
 
     // Calculate reading progress
     const getProgress = (book: any) => {
@@ -65,33 +33,8 @@ function Home() {
         return Math.round((book.currentPage / book.totalPages) * 100);
     };
 
-    // Mock recent notes - in real app, this would come from your notes data
-    const recentNotes = [
-        {
-            id: "1",
-            bookTitle: "Programming in C",
-            page: 145,
-            content:
-                "Important concept about pointers and memory allocation. This explains why we need to be careful with malloc() and free().",
-            date: "2025-10-15",
-        },
-        {
-            id: "2",
-            bookTitle: "Clean Code",
-            page: 67,
-            content:
-                "Functions should do one thing and do it well. Single Responsibility Principle in action.",
-            date: "2025-10-14",
-        },
-        {
-            id: "3",
-            bookTitle: "Programming in C",
-            page: 89,
-            content:
-                "Arrays and strings relationship. Remember that strings are just arrays of characters.",
-            date: "2025-10-13",
-        },
-    ];
+    // Get recent notes with book titles
+    const recentNotes = getRecentNotes(3);
 
     return (
         <div
@@ -117,10 +60,27 @@ function Home() {
                         Ready to continue your reading journey?
                     </p>
                 </div>
-                {/* Quick action button */}
-                <button className="btn btn-primary">
-                    <i className="bi bi-plus-lg me-2"></i>Add Book
-                </button>
+                {/* Quick action buttons */}
+                <div className="d-flex gap-2">
+                    <button
+                        className="btn btn-outline-primary"
+                        onClick={() => setIsAddNoteModalOpen(true)}
+                        disabled={state.books.length === 0}
+                        title={
+                            state.books.length === 0
+                                ? "Add a book first to create notes"
+                                : ""
+                        }
+                    >
+                        <i className="bi bi-pencil me-2"></i>Add Note
+                    </button>
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => setIsAddBookModalOpen(true)}
+                    >
+                        <i className="bi bi-plus-lg me-2"></i>Add Book
+                    </button>
+                </div>
             </div>
 
             {/* Currently Reading - Priority Section */}
@@ -135,7 +95,10 @@ function Home() {
                                 <div key={book.id} className="col-md-6 mb-3">
                                     <div className="d-flex">
                                         <img
-                                            src={book.cover}
+                                            src={
+                                                book.coverUrl ||
+                                                "https://via.placeholder.com/80x120?text=No+Cover"
+                                            }
                                             alt={book.title}
                                             className="rounded me-3"
                                             style={{
@@ -199,7 +162,7 @@ function Home() {
                     <div className="card text-center h-100">
                         <div className="card-body">
                             <div className="text-primary fs-1">📚</div>
-                            <h4 className="card-title">{books.length}</h4>
+                            <h4 className="card-title">{stats.totalBooks}</h4>
                             <p className="card-text small text-muted">
                                 Total Books
                             </p>
@@ -210,12 +173,7 @@ function Home() {
                     <div className="card text-center h-100">
                         <div className="card-body">
                             <div className="text-success fs-1">✅</div>
-                            <h4 className="card-title">
-                                {
-                                    books.filter((b) => b.status === "finished")
-                                        .length
-                                }
-                            </h4>
+                            <h4 className="card-title">{stats.booksRead}</h4>
                             <p className="card-text small text-muted">
                                 Completed
                             </p>
@@ -227,7 +185,7 @@ function Home() {
                         <div className="card-body">
                             <div className="text-warning fs-1">📖</div>
                             <h4 className="card-title">
-                                {currentlyReading.length}
+                                {stats.currentlyReading}
                             </h4>
                             <p className="card-text small text-muted">
                                 Currently Reading
@@ -239,9 +197,9 @@ function Home() {
                     <div className="card text-center h-100">
                         <div className="card-body">
                             <div className="text-info fs-1">📝</div>
-                            <h4 className="card-title">{recentNotes.length}</h4>
+                            <h4 className="card-title">{state.notes.length}</h4>
                             <p className="card-text small text-muted">
-                                Recent Notes
+                                Total Notes
                             </p>
                         </div>
                     </div>
@@ -262,7 +220,7 @@ function Home() {
                     </button>
                 </div>
                 <div className="row">
-                    {recentBooks.map((book) => (
+                    {recentBooks.map((book: Book) => (
                         <div
                             className="col-6 col-md-4 col-lg-3 mb-3"
                             key={book.id}
@@ -287,7 +245,10 @@ function Home() {
                                 </span>
 
                                 <img
-                                    src={book.cover}
+                                    src={
+                                        book.coverUrl ||
+                                        "https://via.placeholder.com/200x250?text=No+Cover"
+                                    }
                                     className="card-img-top"
                                     style={{
                                         height: "200px",
@@ -353,8 +314,14 @@ function Home() {
                                     No notes yet. Start taking notes as you
                                     read!
                                 </p>
-                                <button className="btn btn-primary btn-sm">
-                                    Add Your First Note
+                                <button
+                                    className="btn btn-primary btn-sm"
+                                    onClick={() => setIsAddNoteModalOpen(true)}
+                                    disabled={state.books.length === 0}
+                                >
+                                    {state.books.length === 0
+                                        ? "Add a Book First"
+                                        : "Add Your First Note"}
                                 </button>
                             </div>
                         </div>
@@ -365,7 +332,8 @@ function Home() {
                                     <div className="border rounded p-3 h-100">
                                         <div className="d-flex justify-content-between align-items-start mb-2">
                                             <h6 className="text-primary mb-0 small">
-                                                {note.bookTitle}
+                                                {getBookById(note.bookId)
+                                                    ?.title || "Unknown Book"}
                                             </h6>
                                             <span className="badge bg-light text-dark">
                                                 p.{note.page}
@@ -383,7 +351,7 @@ function Home() {
                                             {note.content}
                                         </p>
                                         <small className="text-muted">
-                                            {note.date}
+                                            {note.dateCreated.toLocaleDateString()}
                                         </small>
                                     </div>
                                 </div>
@@ -392,6 +360,16 @@ function Home() {
                     )}
                 </div>
             </div>
+
+            {/* Modals */}
+            <AddBookModal
+                isOpen={isAddBookModalOpen}
+                onClose={() => setIsAddBookModalOpen(false)}
+            />
+            <AddNoteModal
+                isOpen={isAddNoteModalOpen}
+                onClose={() => setIsAddNoteModalOpen(false)}
+            />
         </div>
     );
 }

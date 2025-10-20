@@ -1,10 +1,10 @@
-// import { useState } from "react";
+import { useState } from "react";
 import NavBar from "./components/NavBar";
 import Home from "./components/Home";
 import Library from "./components/Library";
 import Notes from "./components/Notes";
 import Stats from "./components/Stats";
-import { useState } from "react";
+import { BookTrackerProvider } from "./contexts/BookTrackerContext";
 
 function App() {
     const [selectedPage, setSelectedPage] = useState("Home");
@@ -21,13 +21,13 @@ function App() {
     };
 
     return (
-        <>
+        <BookTrackerProvider>
             {pageComponents[selectedPage] || <Home />}
             <NavBar
-                navBarItems={["Home", "Library", "Notes", "Stats"]}
+                navBarItems={["Home", "Library", "Notes"]}
                 onSelectedPage={handleSelectedPage}
             />
-        </>
+        </BookTrackerProvider>
     );
 }
 
