@@ -11,7 +11,7 @@ function Notes() {
     const [editingNote, setEditingNote] = useState<Note | undefined>(undefined);
 
     // Get data from context
-    const { state, getBookById } = useBookTracker();
+    const { state, getBookById, deleteNote } = useBookTracker();
 
     // Get real data
     const books = state.books;
@@ -153,34 +153,56 @@ function Notes() {
                                             </button>
                                             <ul className="dropdown-menu">
                                                 <li>
-                                                    <a
+                                                    <button
                                                         className="dropdown-item"
-                                                        href="#"
+                                                        onClick={() => {
+                                                            setEditingNote(
+                                                                note
+                                                            );
+                                                            setIsAddNoteModalOpen(
+                                                                true
+                                                            );
+                                                        }}
                                                     >
                                                         <i className="bi bi-pencil me-2"></i>
                                                         Edit
-                                                    </a>
+                                                    </button>
                                                 </li>
                                                 <li>
-                                                    <a
+                                                    <button
                                                         className="dropdown-item"
-                                                        href="#"
+                                                        onClick={() => {
+                                                            // TODO: Implement share functionality
+                                                            alert(
+                                                                "Share functionality coming soon!"
+                                                            );
+                                                        }}
                                                     >
                                                         <i className="bi bi-share me-2"></i>
                                                         Share
-                                                    </a>
+                                                    </button>
                                                 </li>
                                                 <li>
                                                     <hr className="dropdown-divider" />
                                                 </li>
                                                 <li>
-                                                    <a
+                                                    <button
                                                         className="dropdown-item text-danger"
-                                                        href="#"
+                                                        onClick={() => {
+                                                            if (
+                                                                confirm(
+                                                                    "Are you sure you want to delete this note?"
+                                                                )
+                                                            ) {
+                                                                deleteNote(
+                                                                    note.id
+                                                                );
+                                                            }
+                                                        }}
                                                     >
                                                         <i className="bi bi-trash me-2"></i>
                                                         Delete
-                                                    </a>
+                                                    </button>
                                                 </li>
                                             </ul>
                                         </div>
