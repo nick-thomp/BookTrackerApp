@@ -6,12 +6,14 @@ interface AddNoteModalProps {
     isOpen: boolean;
     onClose: () => void;
     editNote?: Note; // Optional - if provided, modal is in edit mode
+    preSelectedBookId?: string; // Optional - pre-select a book when opening
 }
 
 const AddNoteModal: React.FC<AddNoteModalProps> = ({
     isOpen,
     onClose,
     editNote,
+    preSelectedBookId,
 }) => {
     const { state, addNote, updateNote, getBookById } = useBookTracker();
 
@@ -37,16 +39,16 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({
                 tags: editNote.tags?.join(", ") || "",
             });
         } else {
-            // Reset form for new note
+            // Reset form for new note (with optional pre-selected book)
             setFormData({
-                bookId: "",
+                bookId: preSelectedBookId || "",
                 page: "",
                 content: "",
                 tags: "",
             });
         }
         setErrors({});
-    }, [editNote, isOpen]);
+    }, [editNote, preSelectedBookId, isOpen]);
 
     // Handle input changes
     const handleChange = (
