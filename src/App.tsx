@@ -24,6 +24,7 @@ function App() {
         <BookTrackerProvider>
             {pageComponents[selectedPage] || <Home />}
             <NavBar
+                // Stats removed for now
                 navBarItems={["Home", "Library", "Notes"]}
                 onSelectedPage={handleSelectedPage}
             />
