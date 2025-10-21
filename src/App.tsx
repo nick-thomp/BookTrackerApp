@@ -22,7 +22,9 @@ function App() {
 
     return (
         <BookTrackerProvider>
-            {pageComponents[selectedPage] || <Home />}
+            <div className="pb-5 mb-3">
+                {pageComponents[selectedPage] || <Home />}
+            </div>
             <NavBar
                 // Stats removed for now
                 navBarItems={["Home", "Library", "Notes"]}

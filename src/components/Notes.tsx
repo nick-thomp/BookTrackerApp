@@ -34,7 +34,7 @@ function Notes() {
         <div
             className="h-100 overflow-auto px-3 py-3"
             style={{
-                height: "calc(100vh - 80px)", // Same pattern as Home page for consistency
+                height: "calc(100vh - 100px)", // Same pattern as Home page for consistency
                 paddingBottom: "20px",
             }}
         >

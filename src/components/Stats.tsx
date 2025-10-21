@@ -83,7 +83,7 @@ function Stats() {
         <div
             className="h-100 overflow-auto px-3 py-3"
             style={{
-                height: "calc(100vh - 80px)", // Consistent with other pages
+                height: "calc(100vh - 100px)", // Consistent with other pages
                 paddingBottom: "20px",
             }}
         >

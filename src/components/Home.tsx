@@ -40,7 +40,7 @@ function Home() {
         <div
             className="overflow-auto px-3 py-3"
             style={{
-                height: "calc(100vh - 80px)", // Subtract navbar height
+                height: "calc(100vh - 100px)", // Subtract navbar height
                 paddingBottom: "20px", // Extra padding at bottom
             }}
         >
