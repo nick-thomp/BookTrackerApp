@@ -139,7 +139,7 @@ const AddBookModal: React.FC<AddBookModalProps> = ({ isOpen, onClose }) => {
                 onClick={handleClose}
             >
                 <div
-                    className="modal-dialog modal-dialog-centered modal-lg"
+                    className="modal-dialog modal-dialog-centered modal-fullscreen"
                     onClick={(e) => e.stopPropagation()} // Prevent close when clicking inside modal
                 >
                     <div className="modal-content">

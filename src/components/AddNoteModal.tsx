@@ -172,7 +172,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({
                 onClick={handleClose}
             >
                 <div
-                    className="modal-dialog modal-dialog-centered modal-lg"
+                    className="modal-dialog modal-dialog-centered modal-fullscreen"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="modal-content">
