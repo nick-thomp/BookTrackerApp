@@ -6,8 +6,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react(),
     VitePWA({ 
-      registerType: 'prompt',
-      injectRegister: 'auto',
+      registerType: 'autoUpdate',
       manifest: {
         name: 'Book Tracker',
         short_name: 'BT',
